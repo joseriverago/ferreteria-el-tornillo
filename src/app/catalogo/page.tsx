@@ -2,6 +2,7 @@ import type { Types } from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import Product, { CATEGORIAS } from "@/models/Product";
 import Link from "next/link";
+import Form from "next/form";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,10 +90,8 @@ export default async function CatalogoPage({
           </p>
         </header>
 
-        <form
-          key={JSON.stringify([busqueda, categoria])} //permite que el formulario refleje correctamente el cambio al limpiar la búsqueda.
+        <Form
           action="/catalogo"
-          method="GET"
           className="mb-8 rounded-xl border border-slate-200 bg-white p-5"
         >
           <div className="mb-4">
@@ -104,6 +103,7 @@ export default async function CatalogoPage({
             </label>
 
             <select
+              key={`categoria-${categoria}`}
               id="categoria"
               name="categoria" //incorpora la selección a la URL al enviar el formulario.
               defaultValue={categoria} //conserva la categoría seleccionada al mostrar los resultados.
@@ -128,6 +128,7 @@ export default async function CatalogoPage({
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <input
+              key={`busqueda-${busqueda}`}
               id="busqueda"
               name="q"
               type="search"
@@ -151,7 +152,7 @@ export default async function CatalogoPage({
               Limpiar filtros
             </Link>
           </div>
-        </form>
+        </Form>
 
         {productos.length === 0 ? (
           <p className="rounded-xl bg-white p-6">
