@@ -1,0 +1,62 @@
+[
+  {
+    "codigo": "HM-001",
+    "nombre": "Martillo de uña 16 oz",
+    "categoria": "Herramientas manuales",
+    "descripcion": "Martillo con mango antideslizante para trabajos generales.",
+    "precio": 35.9,
+    "stock": 20,
+    "imagen": "",
+    "marca": "Marca Demo"
+  },
+  {
+    "codigo": "HE-001",
+    "nombre": "Taladro percutor 650 W",
+    "categoria": "Herramientas eléctricas",
+    "descripcion": "Taladro eléctrico para perforaciones domésticas.",
+    "precio": 189.9,
+    "stock": 8,
+    "imagen": "",
+    "marca": "Marca Demo"
+  },
+  {
+    "codigo": "EL-001",
+    "nombre": "Foco LED 12 W",
+    "categoria": "Electricidad",
+    "descripcion": "Foco de luz blanca con rosca E27.",
+    "precio": 9.5,
+    "stock": 50,
+    "imagen": "",
+    "marca": "Marca Demo"
+  },
+  {
+    "codigo": "GA-001",
+    "nombre": "Tubo PVC 1/2 pulgada, 3 metros",
+    "categoria": "Gasfitería",
+    "descripcion": "Tubo para instalaciones de agua; precio por unidad de 3 metros.",
+    "precio": 12,
+    "stock": 30,
+    "imagen": "",
+    "marca": "Marca Demo"
+  },
+  {
+    "codigo": "PI-001",
+    "nombre": "Pintura látex blanca, 1 galón",
+    "categoria": "Pinturas",
+    "descripcion": "Pintura para paredes interiores.",
+    "precio": 59.9,
+    "stock": 0,
+    "imagen": "",
+    "marca": "Marca Demo"
+  },
+  {
+    "codigo": "CO-001",
+    "nombre": "Cemento tipo I, bolsa 42.5 kg",
+    "categoria": "Construcción",
+    "descripcion": "Cemento de uso general; precio por bolsa.",
+    "precio": 32.5,
+    "stock": 40,
+    "imagen": "",
+    "marca": "Marca Demo"
+  }
+]
