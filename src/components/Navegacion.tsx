@@ -33,7 +33,12 @@ export default function Navegacion() {
           >
             Catálogo
           </Link>
-
+          <Link
+            href="/contacto"
+            className="hover:text-orange-700 hover:underline"
+          >
+            Contacto
+          </Link>
           <Link
             href="/carrito"
             className="rounded-lg bg-orange-700 px-4 py-2 text-white hover:bg-orange-800"

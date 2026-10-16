@@ -109,7 +109,7 @@ export default async function CatalogoPage({
               defaultValue={categoria} //conserva la categoría seleccionada al mostrar los resultados.
               className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 focus:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-200"
             >
-              <option value="">Todas las categorías</option> 
+              <option value="">Todas las categorías</option>
 
               {CATEGORIAS.map((opcion) => ( //genera una opción para cada categoría
                 <option key={opcion} value={opcion}>
@@ -189,7 +189,7 @@ export default async function CatalogoPage({
 
                 <div className="mt-auto pt-6">
                   <p className="text-2xl font-bold">
-                    {formatoPrecio.format(producto.precio)} 
+                    {formatoPrecio.format(producto.precio)}
                   </p>
 
                   {producto.stock > 0 ? (
@@ -212,7 +212,7 @@ export default async function CatalogoPage({
             ))}
           </div>
         )}
-      </div>  
+      </div>
     </main>
   );
-} 
+}
