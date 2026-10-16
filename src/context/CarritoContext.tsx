@@ -3,7 +3,6 @@
 import {
   createContext,
   useContext,
-  useState,
   type ReactNode,
 } from "react";
 
@@ -11,6 +10,8 @@ import type {
   ItemCarrito,
   ProductoCarrito,
 } from "@/types/carrito";
+
+import { useCarritoPersistente } from "@/lib/carrito-storage";
 
 type CarritoContextType = {
   items: ItemCarrito[]; //guarda los productos seleccionados.
@@ -27,7 +28,7 @@ export function CarritoProvider({
 }: {
   children: ReactNode;
 }) {
-  const [items, setItems] = useState<ItemCarrito[]>([]);
+  const [items, setItems] = useCarritoPersistente();
 
   function agregarProducto(producto: ProductoCarrito) { //añade una unidad. Si el producto ya existe, aumenta su cantidad sin duplicar la fila.
     if (producto.stock <= 0) {
