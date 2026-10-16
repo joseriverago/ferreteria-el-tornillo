@@ -212,7 +212,7 @@ export default async function CatalogoPage({
             ))}
           </div>
         )}
-      </div>
+      </div>  
     </main>
   );
 } 
