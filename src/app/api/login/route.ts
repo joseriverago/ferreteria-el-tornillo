@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { connectDB } from "@/lib/mongodb";
 import { verificarPassword } from "@/lib/password";
 import { crearSesion } from "@/lib/sesion";
 import User from "@/models/User";
+import { verificarConLimite } from "@/lib/limite-acceso";
 
 export const runtime = "nodejs";
 
@@ -87,28 +87,65 @@ export async function POST(request: Request) {
 
   const { correo, password } = resultado.data;
 
-  try {
-    await connectDB();
+    try {
+    const acceso = await verificarConLimite(correo, async () => {
+      const usuario = await User.findOne({ correo })
+        .select("+passwordHash");
 
-    const usuario = await User.findOne({ correo })
-      .select("+passwordHash");
+      const passwordCorrecta = await verificarPassword(
+        password,
+        usuario?.passwordHash ?? HASH_NEUTRO
+      );
 
-    const passwordCorrecta = await verificarPassword(
-      password,
-      usuario?.passwordHash ?? HASH_NEUTRO
-    );
+      if (!usuario || !passwordCorrecta) {
+        return null;
+      }
 
-    if (!usuario || !passwordCorrecta) {
+      return usuario;
+    });
+
+    if (acceso.estado === "limitado") {
+      const minutos = Math.ceil(
+        acceso.reintentarEnSegundos / 60
+      );
+
+      const mensaje = acceso.comprobacionesEnCurso
+        ? "Hay comprobaciones de acceso en curso. Inténtalo nuevamente en unos segundos."
+        : `Alcanzaste el límite de intentos fallidos. ` +
+          `Vuelve a intentarlo en ${minutos} ` +
+          `${minutos === 1 ? "minuto" : "minutos"}.`;
+
+      return NextResponse.json(
+        {
+          ok: false,
+          mensaje,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(acceso.reintentarEnSegundos),
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    if (acceso.estado === "incorrecto") {
       return NextResponse.json(
         {
           ok: false,
           mensaje: "Correo o contraseña incorrectos.",
         },
-        { status: 401 }
+        {
+          status: 401,
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        }
       );
     }
 
-    await crearSesion(usuario._id.toString());
+    await crearSesion(acceso.usuario._id.toString());
 
     return NextResponse.json(
       {
@@ -133,7 +170,12 @@ export async function POST(request: Request) {
         ok: false,
         mensaje: "No pudimos iniciar sesión. Inténtalo nuevamente.",
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
     );
   }
 }
