@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CarritoProvider } from "@/context/CarritoContext";
 import Navegacion from "@/components/Navegacion";
+import { obtenerUsuarioActual } from "@/lib/sesion";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +20,11 @@ export const metadata: Metadata = {
   description: "Catálogo de productos y cotizaciones en línea",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({
+  children,
+}: LayoutProps<"/">) {
+  const usuario = await obtenerUsuarioActual();
+
   return (
     <html
       lang="es"
@@ -27,7 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <CarritoProvider>
-          <Navegacion /> 
+          <Navegacion
+            usuario={usuario ? { nombre: usuario.nombre } : null}
+          />
           {children}
         </CarritoProvider>
       </body>
