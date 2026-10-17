@@ -40,6 +40,12 @@ export default function Navegacion() {
             Contacto
           </Link>
           <Link
+            href="/registro"
+            className="hover:text-orange-700 hover:underline"
+          >
+            Crear cuenta
+          </Link>
+          <Link
             href="/carrito"
             className="rounded-lg bg-orange-700 px-4 py-2 text-white hover:bg-orange-800"
           >
