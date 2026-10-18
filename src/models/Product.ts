@@ -1,4 +1,5 @@
-import { Schema, models, model, InferSchemaType } from "mongoose";
+import { Schema, models, model } from "mongoose";
+import type { InferSchemaType, Model } from "mongoose";
 
 export const CATEGORIAS = [
     "Herramientas manuales",
@@ -24,4 +25,9 @@ const ProductSchema = new Schema(
 );
 
 export type ProductType = InferSchemaType<typeof ProductSchema>;
-export default models.Product || model("Product", ProductSchema);
+
+const Product =
+  (models.Product as Model<ProductType> | undefined) ??
+  model<ProductType>("Product", ProductSchema);
+
+export default Product; 

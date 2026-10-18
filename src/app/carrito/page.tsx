@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCarrito } from "@/context/CarritoContext";
+import EnviarCotizacion from "./EnviarCotizacion";
 
 const formatoPrecio = new Intl.NumberFormat("es-PE", {
   style: "currency",
@@ -175,6 +176,8 @@ export default function CarritoPage() {
             </section>
           </>
         )}
+
+        <EnviarCotizacion />
       </div>
     </main>
   );

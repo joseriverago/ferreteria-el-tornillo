@@ -8,6 +8,7 @@ import { useCarrito } from "@/context/CarritoContext";
 type NavegacionProps = {
   usuario: {
     nombre: string;
+    rol: "cliente" | "administrador";
   } | null;
 };
 
@@ -85,6 +86,24 @@ export default function Navegacion({ usuario }: NavegacionProps) {
 
           {usuario ? (
             <>
+              {usuario.rol === "cliente" && (
+                <Link
+                  href="/mis-cotizaciones"
+                  className="hover:text-orange-700 hover:underline"
+                >
+                  Mis cotizaciones
+                </Link>
+              )}
+
+              {usuario.rol === "administrador" && (
+                <Link
+                  href="/admin"
+                  className="hover:text-orange-700 hover:underline"
+                >
+                  Administración
+                </Link>
+              )}
+
               <span className="text-slate-600">
                 Hola, {usuario.nombre}
               </span>

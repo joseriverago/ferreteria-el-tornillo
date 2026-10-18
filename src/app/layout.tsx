@@ -33,7 +33,14 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <CarritoProvider>
           <Navegacion
-            usuario={usuario ? { nombre: usuario.nombre } : null}
+            usuario={
+              usuario
+                ? {
+                    nombre: usuario.nombre,
+                    rol: usuario.rol,
+                  }
+                : null
+            }
           />
           {children}
         </CarritoProvider>
