@@ -71,6 +71,7 @@ export async function POST(request: Request) {
 
     const productos = await Product.find({
       codigo: { $in: codigos },
+      activo: { $ne: false },
     }).select("_id codigo nombre precio stock").lean();
 
     const porCodigo = new Map(

@@ -52,6 +52,9 @@ export default async function CatalogoPage({
   );
 
   const filtro = {
+    activo: { $ne: false },
+
+    // Aquí continúan los filtros actuales de búsqueda y categoría.
     ...(busqueda
       ? {
           $or: [

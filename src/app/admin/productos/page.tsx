@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongodb";
 import { verificarPermiso } from "@/lib/permisos";
 import Product from "@/models/Product";
+import CambiarEstadoProducto from "./CambiarEstadoProducto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,7 +54,7 @@ export default async function ProductosAdminPage({ searchParams }: Props) {
   await connectDB();
 
   const resultados = await Product.find({})
-    .select("_id codigo nombre categoria precio stock")
+    .select("_id codigo nombre categoria precio stock activo updatedAt")
     .sort({ nombre: 1, _id: 1 })
     .skip((pagina - 1) * TAMANO_PAGINA)
     .limit(TAMANO_PAGINA + 1)
@@ -120,6 +121,9 @@ export default async function ProductosAdminPage({ searchParams }: Props) {
                     Stock
                   </th>
                   <th scope="col" className="px-4 py-3">
+                    Estado
+                  </th>
+                  <th scope="col" className="px-4 py-3">
                     Acciones
                   </th>
                 </tr>
@@ -158,14 +162,28 @@ export default async function ProductosAdminPage({ searchParams }: Props) {
                     </td>
 
                     <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-3">
-                        <Link
-                          href={`/catalogo/${encodeURIComponent(producto.codigo)}`}
-                          aria-label={`Ver ${producto.nombre} en el catálogo`}
-                          className="font-semibold text-orange-700 hover:underline"
-                        >
-                          Ver en catálogo
-                        </Link>
+                      <span
+                        className={
+                          producto.activo !== false
+                            ? "font-semibold text-green-700"
+                            : "font-semibold text-slate-600"
+                        }
+                      >
+                        {producto.activo !== false ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap items-center gap-3">
+                        {producto.activo !== false && (
+                          <Link
+                            href={`/catalogo/${encodeURIComponent(producto.codigo)}`}
+                            aria-label={`Ver ${producto.nombre} en el catálogo`}
+                            className="font-semibold text-orange-700 hover:underline"
+                          >
+                            Ver en catálogo
+                          </Link>
+                        )}
 
                         <Link
                           href={`/admin/productos/${producto._id.toString()}/editar`}
@@ -174,6 +192,14 @@ export default async function ProductosAdminPage({ searchParams }: Props) {
                         >
                           Editar
                         </Link>
+
+                        <CambiarEstadoProducto
+                          key={`${producto._id.toString()}-${producto.updatedAt?.toISOString() ?? "sin-fecha"}-${producto.activo !== false}`}
+                          id={producto._id.toString()}
+                          nombre={producto.nombre}
+                          activo={producto.activo !== false}
+                          actualizadoEn={producto.updatedAt?.toISOString() ?? null}
+                        />
                       </div>
                     </td>
                   </tr>

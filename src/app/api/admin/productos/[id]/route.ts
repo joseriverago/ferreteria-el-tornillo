@@ -18,6 +18,18 @@ const EdicionSchema = z
   })
   .strict();
 
+const EstadoSchema = z
+  .object({
+    activo: z.boolean(),
+    actualizadoEn: z.string().datetime({ precision: 3 }).nullable(),
+  })
+  .strict();
+
+const ActualizacionSchema = z.union([
+  EdicionSchema,
+  EstadoSchema,
+]);
+
 type Contexto = {
   params: Promise<{ id: string }>;
 };
@@ -68,11 +80,11 @@ export async function PATCH(request: Request, { params }: Contexto) {
       return rechazar("El contenido no es un JSON válido.", 400);
     }
 
-    const resultado = EdicionSchema.safeParse(datos);
+    const resultado = ActualizacionSchema.safeParse(datos);
 
     if (!resultado.success) {
       return rechazar(
-        "Revisa el nombre, la categoría, el precio y el stock. El código no se puede modificar.",
+        "Los datos de actualización no son válidos. Revisa el formulario o recarga la página.",
         400
       );
     }
@@ -113,7 +125,7 @@ export async function PATCH(request: Request, { params }: Contexto) {
 
       return existe
         ? rechazar(
-            "El producto cambió desde que abriste el formulario. Recarga la página y revisa los datos antes de guardar.",
+            "El producto cambió desde que cargaste los datos. Actualiza la lista o recarga el formulario antes de continuar.",
             409
           )
         : rechazar("El producto ya no existe.", 404);

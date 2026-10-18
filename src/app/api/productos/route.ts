@@ -10,7 +10,7 @@ export async function GET() {
   try {
     await connectDB(); //establece o reutiliza la conexión con Atlas.
 
-    const productos = await Product.find({}) //consulta todos los documentos de products.
+    const productos = await Product.find({ activo: { $ne: false } }) //consulta todos los documentos de products.
       .select(
         "codigo nombre categoria descripcion precio stock imagen marca"
       ) //selecciona los campos que devolveremos. _id también se incluye por defecto.

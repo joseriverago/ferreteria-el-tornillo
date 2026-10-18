@@ -23,6 +23,7 @@ export default async function DetalleProductoPage({
 
   const producto: ProductType | null = await Product.findOne({ //busca un único producto en MongoDB. Tu modelo ya define ese código como único.
     codigo,
+    activo: { $ne: false },
   }).lean();
   //ProductType | null: indica que la consulta puede devolver un producto o no encontrar ninguno.
 

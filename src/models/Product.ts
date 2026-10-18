@@ -18,6 +18,7 @@ const ProductSchema = new Schema(
         descripcion: { type: String, default: "" },
         precio: { type: Number, required: true, min: 0 },
         stock: { type: Number, required: true,  min: 0, default: 0 },
+        activo: { type: Boolean, required: true, default: true },
         imagen: { type: String, default: "" },
         marca: { type: String, default: "" },
     },
