@@ -4,6 +4,18 @@ import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import { z } from "zod";
 
+type ProductoEditable = {
+  id: string;
+  codigo: string;
+  nombre: string;
+  categoria: string;
+  precio: number;
+  stock: number;
+  marca: string;
+  descripcion: string;
+  actualizadoEn: string | null;
+};
+
 const ExitoSchema = z.object({
   ok: z.literal(true),
   producto: z.object({
@@ -16,18 +28,22 @@ const ErrorSchema = z.object({
   mensaje: z.string(),
 });
 
-const campo = "mt-1 w-full rounded-lg border border-slate-300 p-3";
+const campo =
+  "mt-1 w-full rounded-lg border border-slate-300 p-3";
 
 export default function FormularioProducto({
   categorias,
+  producto,
 }: {
   categorias: readonly string[];
+  producto?: ProductoEditable;
 }) {
   const bloqueo = useRef(false);
+
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
 
-  const [creado, setCreado] = useState<{
+  const [guardado, setGuardado] = useState<{
     codigo: string;
     nombre: string;
   } | null>(null);
@@ -35,7 +51,7 @@ export default function FormularioProducto({
   async function guardar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (bloqueo.current || creado) return;
+    if (bloqueo.current || guardado) return;
 
     const datos = new FormData(event.currentTarget);
     const precio = String(datos.get("precio") ?? "");
@@ -46,20 +62,29 @@ export default function FormularioProducto({
     setError("");
 
     try {
-      const respuesta = await fetch("/api/admin/productos", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          codigo: datos.get("codigo"),
-          nombre: datos.get("nombre"),
-          categoria: datos.get("categoria"),
-          precio: precio.trim() === "" ? null : Number(precio),
-          stock: stock.trim() === "" ? null : Number(stock),
-          marca: datos.get("marca"),
-          descripcion: datos.get("descripcion"),
-        }),
-      });
+      const respuesta = await fetch(
+        producto
+          ? `/api/admin/productos/${producto.id}`
+          : "/api/admin/productos",
+        {
+          method: producto ? "PATCH" : "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...(producto
+              ? { actualizadoEn: producto.actualizadoEn }
+              : { codigo: datos.get("codigo") }),
+            nombre: datos.get("nombre"),
+            categoria: datos.get("categoria"),
+            precio: precio.trim() === "" ? null : Number(precio),
+            stock: stock.trim() === "" ? null : Number(stock),
+            marca: datos.get("marca"),
+            descripcion: datos.get("descripcion"),
+          }),
+        }
+      );
 
       const contenido: unknown = await respuesta.json();
 
@@ -71,6 +96,7 @@ export default function FormularioProducto({
             ? detalle.data.mensaje
             : "No pudimos guardar el producto."
         );
+
         return;
       }
 
@@ -80,10 +106,10 @@ export default function FormularioProducto({
         throw new Error("Respuesta inesperada.");
       }
 
-      setCreado(resultado.data.producto);
+      setGuardado(resultado.data.producto);
     } catch {
       setError(
-        "No pudimos confirmar el resultado. Revisa el listado por código antes de repetir el envío."
+        "No pudimos confirmar el resultado. Revisa los datos guardados antes de repetir el envío."
       );
     } finally {
       bloqueo.current = false;
@@ -91,16 +117,17 @@ export default function FormularioProducto({
     }
   }
 
-  if (creado) {
+  if (guardado) {
     return (
       <section className="mt-6 rounded-xl border border-green-200 bg-green-50 p-6">
         <p role="status" className="font-semibold text-green-900">
-          Producto creado: {creado.nombre} ({creado.codigo}).
+          {producto ? "Producto actualizado" : "Producto creado"}:{" "}
+          {guardado.nombre} ({guardado.codigo}).
         </p>
 
         <div className="mt-4 flex flex-wrap gap-4">
           <Link
-            href={`/catalogo/${encodeURIComponent(creado.codigo)}`}
+            href={`/catalogo/${encodeURIComponent(guardado.codigo)}`}
             className="font-semibold text-orange-700 underline"
           >
             Ver en catálogo
@@ -113,16 +140,18 @@ export default function FormularioProducto({
             Volver al listado
           </Link>
 
-          <button
-            type="button"
-            onClick={() => {
-              setCreado(null);
-              setError("");
-            }}
-            className="font-semibold underline"
-          >
-            Crear otro producto
-          </button>
+          {!producto && (
+            <button
+              type="button"
+              onClick={() => {
+                setGuardado(null);
+                setError("");
+              }}
+              className="font-semibold underline"
+            >
+              Crear otro producto
+            </button>
+          )}
         </div>
       </section>
     );
@@ -148,11 +177,14 @@ export default function FormularioProducto({
             required
             minLength={2}
             maxLength={40}
+            defaultValue={producto?.codigo ?? ""}
+            readOnly={Boolean(producto)}
             className={campo}
-            placeholder="HM-002"
           />
           <span className="mt-1 block text-sm font-normal text-slate-600">
-            Usa letras, números, guion o guion bajo. Se guardará en mayúsculas.
+            {producto
+              ? "El código se conserva para mantener su enlace en el catálogo."
+              : "Usa letras, números, guion o guion bajo. Se guardará en mayúsculas."}
           </span>
         </label>
 
@@ -163,6 +195,7 @@ export default function FormularioProducto({
             required
             minLength={2}
             maxLength={150}
+            defaultValue={producto?.nombre ?? ""}
             className={campo}
           />
         </label>
@@ -172,7 +205,7 @@ export default function FormularioProducto({
           <select
             name="categoria"
             required
-            defaultValue=""
+            defaultValue={producto?.categoria ?? ""}
             className={campo}
           >
             <option value="" disabled>
@@ -196,6 +229,7 @@ export default function FormularioProducto({
             min="0"
             max="999999.99"
             step="0.01"
+            defaultValue={producto?.precio ?? ""}
             className={campo}
           />
         </label>
@@ -209,13 +243,19 @@ export default function FormularioProducto({
             min="0"
             max="1000000"
             step="1"
+            defaultValue={producto?.stock ?? ""}
             className={campo}
           />
         </label>
 
         <label className="block font-semibold">
           Marca (opcional)
-          <input name="marca" maxLength={100} className={campo} />
+          <input
+            name="marca"
+            maxLength={100}
+            defaultValue={producto?.marca ?? ""}
+            className={campo}
+          />
         </label>
 
         <label className="block font-semibold">
@@ -224,6 +264,7 @@ export default function FormularioProducto({
             name="descripcion"
             maxLength={2000}
             rows={4}
+            defaultValue={producto?.descripcion ?? ""}
             className={campo}
           />
         </label>
@@ -232,15 +273,24 @@ export default function FormularioProducto({
           type="submit"
           className="rounded-lg bg-orange-700 px-5 py-3 font-semibold text-white hover:bg-orange-800"
         >
-          {enviando ? "Guardando..." : "Crear producto"}
+          {enviando
+            ? "Guardando..."
+            : producto
+              ? "Guardar cambios"
+              : "Crear producto"}
         </button>
       </fieldset>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-700">
+        <p
+          role="alert"
+          className="mt-4 rounded-lg bg-red-50 p-4 text-red-700"
+        >
           {error}
         </p>
       )}
     </form>
   );
 }
+
+//El formulario conserva la creación actual. Cuando recibe un producto, carga sus datos y cambia el botón a “Guardar cambios”.

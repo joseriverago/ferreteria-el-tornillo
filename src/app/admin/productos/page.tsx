@@ -120,7 +120,7 @@ export default async function ProductosAdminPage({ searchParams }: Props) {
                     Stock
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Detalle
+                    Acciones
                   </th>
                 </tr>
               </thead>
@@ -158,13 +158,23 @@ export default async function ProductosAdminPage({ searchParams }: Props) {
                     </td>
 
                     <td className="px-4 py-4">
-                      <Link
-                        href={`/catalogo/${encodeURIComponent(producto.codigo)}`}
-                        aria-label={`Ver ${producto.nombre} en el catálogo`}
-                        className="font-semibold text-orange-700 hover:underline"
-                      >
-                        Ver en catálogo
-                      </Link>
+                      <div className="flex flex-wrap gap-3">
+                        <Link
+                          href={`/catalogo/${encodeURIComponent(producto.codigo)}`}
+                          aria-label={`Ver ${producto.nombre} en el catálogo`}
+                          className="font-semibold text-orange-700 hover:underline"
+                        >
+                          Ver en catálogo
+                        </Link>
+
+                        <Link
+                          href={`/admin/productos/${producto._id.toString()}/editar`}
+                          aria-label={`Editar ${producto.nombre}`}
+                          className="font-semibold text-orange-700 hover:underline"
+                        >
+                          Editar
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
