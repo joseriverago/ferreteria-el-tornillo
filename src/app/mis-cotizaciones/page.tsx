@@ -134,7 +134,7 @@ export default async function MisCotizacionesPage({ searchParams }: Props) {
                 </p>
 
                 {cotizacion.observacion && (
-                  <p className="mt-3 whitespace-pre-wrap break-words text-slate-600">
+                  <p className="mt-3 whitespace-pre-wrap wrap-break-word text-slate-600">
                     Observación: {cotizacion.observacion}
                   </p>
                 )}

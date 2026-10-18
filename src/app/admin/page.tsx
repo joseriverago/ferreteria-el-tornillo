@@ -42,6 +42,18 @@ export default async function AdminPage() {
         <p className="mt-4 text-slate-600">
           Bienvenido, {acceso.usuario.nombre}.
         </p>
+        <Link
+          href="/admin/cotizaciones"
+          className="mt-6 block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-orange-700"
+        >
+          <h2 className="text-xl font-bold text-orange-700">
+            Cotizaciones recibidas
+          </h2>
+
+          <p className="mt-2 text-slate-600">
+            Consulta las solicitudes de los clientes y su estado de atención.
+          </p>
+        </Link>
       </div>
     </main> 
   );
