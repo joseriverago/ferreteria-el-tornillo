@@ -54,6 +54,18 @@ export default async function AdminPage() {
             Consulta las solicitudes de los clientes y su estado de atención.
           </p>
         </Link>
+        <Link
+          href="/admin/productos"
+          className="mt-6 block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-orange-700"
+        >
+          <h2 className="text-xl font-bold text-orange-700">
+            Productos
+          </h2>
+
+          <p className="mt-2 text-slate-600">
+            Consulta los productos del catálogo, sus precios y existencias.
+          </p>
+        </Link>
       </div>
     </main> 
   );
