@@ -3,26 +3,60 @@
 import Link from "next/link";
 import { useCarrito } from "@/context/CarritoContext";
 import EnviarCotizacion from "./EnviarCotizacion";
+import useCatalogoCarrito from "@/app/carrito/useCatalogoCarrito";
 
-const formatoPrecio = new Intl.NumberFormat("es-PE", {
+const moneda = new Intl.NumberFormat("es-PE", {
   style: "currency",
   currency: "PEN",
 });
 
 export default function CarritoPage() {
-    //obtiene la selección que ya guardamos.
   const {
     items,
     totalUnidades,
     actualizarCantidad,
     eliminarProducto,
+    sincronizarCatalogo,
   } = useCarrito();
 
-  const totalCentimos = items.reduce(
-    (total, item) =>
-      total + Math.round(item.precio * 100) * item.cantidad,
-    0
+  const firma = JSON.stringify(
+    items.map((item) => item.codigo).sort()
   );
+
+  const {
+    productos,
+    verificado,
+    actualizando,
+    error,
+    actualizar,
+  } = useCatalogoCarrito(firma, sincronizarCatalogo);
+
+  const porCodigo = new Map(
+    productos.map((producto) => [producto.codigo, producto])
+  );
+
+  const seleccionValida =
+    verificado &&
+    items.every((item) => {
+      const producto = porCodigo.get(item.codigo);
+
+      return (
+        producto !== undefined &&
+        item.cantidad <= producto.stock
+      );
+    });
+
+  const totalCentimos = items.reduce((total, item) => {
+    const producto = porCodigo.get(item.codigo);
+
+    return (
+      total +
+      Math.round((producto?.precio ?? 0) * 100) * item.cantidad
+    );
+  }, 0);
+
+  const puedeEnviar =
+    seleccionValida && Number.isSafeInteger(totalCentimos);
 
   return (
     <main className="min-h-screen bg-slate-100 px-6 py-10 text-slate-900">
@@ -44,7 +78,7 @@ export default function CarritoPage() {
           </p>
         </header>
 
-        {items.length === 0 ? ( //cuenta productos distintos
+        {items.length === 0 ? (
           <section className="rounded-xl border border-slate-200 bg-white p-8 text-center">
             <h2 className="text-xl font-semibold">
               Tu carrito está vacío
@@ -56,34 +90,74 @@ export default function CarritoPage() {
 
             <Link
               href="/catalogo"
-              className="mt-6 inline-block rounded-lg bg-orange-700 px-5 py-3 font-semibold text-white hover:bg-orange-800"
+              className="mt-6 inline-block rounded-lg bg-orange-700 px-5 py-3 font-semibold text-white"
             >
               Ver catálogo
             </Link>
           </section>
         ) : (
           <>
+            <section
+              className="mb-6 rounded-xl border border-slate-200 bg-white p-5"
+              aria-busy={actualizando}
+            >
+              <p role="status">
+                {actualizando
+                  ? "Consultando precios y disponibilidad..."
+                  : verificado
+                    ? "Precios y disponibilidad consultados. Revisa tu selección antes de enviar."
+                    : "Los datos del carrito aún no están verificados."}
+              </p>
+
+              <button
+                type="button"
+                disabled={actualizando}
+                onClick={actualizar}
+                className="mt-3 rounded-lg border border-orange-700 px-4 py-2 font-semibold text-orange-700 disabled:opacity-50"
+              >
+                Actualizar precios y disponibilidad
+              </button>
+
+              {error && (
+                <p role="alert" className="mt-3 text-red-700">
+                  {error}
+                </p>
+              )}
+            </section>
+
             <p className="mb-4 text-sm text-slate-600">
               Productos distintos: {items.length} · Unidades totales:{" "}
-              {totalUnidades} 
+              {totalUnidades}
             </p>
 
             <ul className="space-y-4">
               {items.map((item) => {
-                const subtotalCentimos =
-                  Math.round(item.precio * 100) * item.cantidad;
+                const producto = porCodigo.get(item.codigo);
+                const disponible =
+                  verificado && producto !== undefined;
+
+                const nombre = producto?.nombre ?? item.nombre;
+                const stock = producto?.stock ?? 0;
+
+                const subtotal =
+                  Math.round((producto?.precio ?? 0) * 100) *
+                  item.cantidad;
 
                 return (
                   <li
                     key={item.codigo}
                     className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
                   >
-                    <Link
-                      href={`/catalogo/${encodeURIComponent(item.codigo)}`}
-                      className="text-xl font-bold hover:text-orange-700 hover:underline"
-                    >
-                      {item.nombre}
-                    </Link>
+                    {disponible ? (
+                      <Link
+                        href={`/catalogo/${encodeURIComponent(item.codigo)}`}
+                        className="text-xl font-bold hover:text-orange-700 hover:underline"
+                      >
+                        {nombre}
+                      </Link>
+                    ) : (
+                      <h2 className="text-xl font-bold">{nombre}</h2>
+                    )}
 
                     <p className="mt-1 text-sm text-slate-500">
                       Código: {item.codigo}
@@ -95,46 +169,58 @@ export default function CarritoPage() {
                           Precio unitario
                         </dt>
                         <dd className="mt-1 font-semibold">
-                          {formatoPrecio.format(item.precio)}
+                          {disponible
+                            ? moneda.format(producto.precio)
+                            : "Sin verificar"}
                         </dd>
                       </div>
 
                       <div>
                         <dt className="text-sm text-slate-600">
-                            Cantidad
+                          Cantidad
                         </dt>
 
                         <dd className="mt-2 flex items-center gap-3">
-                            <button
+                          <button
                             type="button"
                             onClick={() =>
-                                actualizarCantidad(item.codigo, item.cantidad - 1)
+                              actualizarCantidad(
+                                item.codigo,
+                                item.cantidad - 1
+                              )
                             }
-                            disabled={item.cantidad <= 1}
-                            aria-label={`Disminuir cantidad de ${item.nombre}`}
-                            className="h-10 w-10 rounded-lg border border-slate-300 font-bold hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
+                            disabled={
+                              !disponible || item.cantidad <= 1
+                            }
+                            aria-label={`Disminuir cantidad de ${nombre}`}
+                            className="h-10 w-10 rounded-lg border border-slate-300 font-bold disabled:opacity-40"
+                          >
                             −
-                            </button>
+                          </button>
 
-                            <span
+                          <span
                             aria-live="polite"
                             className="min-w-6 text-center font-semibold"
-                            >
+                          >
                             {item.cantidad}
-                            </span>
+                          </span>
 
-                            <button
+                          <button
                             type="button"
                             onClick={() =>
-                                actualizarCantidad(item.codigo, item.cantidad + 1)
+                              actualizarCantidad(
+                                item.codigo,
+                                item.cantidad + 1
+                              )
                             }
-                            disabled={item.cantidad >= item.stock}
-                            aria-label={`Aumentar cantidad de ${item.nombre}`}
-                            className="h-10 w-10 rounded-lg border border-slate-300 font-bold hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
+                            disabled={
+                              !disponible || item.cantidad >= stock
+                            }
+                            aria-label={`Aumentar cantidad de ${nombre}`}
+                            className="h-10 w-10 rounded-lg border border-slate-300 font-bold disabled:opacity-40"
+                          >
                             +
-                            </button>
+                          </button>
                         </dd>
                       </div>
 
@@ -143,17 +229,52 @@ export default function CarritoPage() {
                           Subtotal
                         </dt>
                         <dd className="mt-1 font-semibold">
-                          {formatoPrecio.format(subtotalCentimos / 100)}
+                          {disponible && item.cantidad <= stock
+                            ? moneda.format(subtotal / 100)
+                            : "Pendiente de revisión"}
                         </dd>
                       </div>
                     </dl>
-                    <button
-                        type="button"
-                        onClick={() => eliminarProducto(item.codigo)}
-                        aria-label={`Eliminar ${item.nombre} del carrito`}
-                        className="mt-5 rounded-lg border border-red-700 px-4 py-2 font-semibold text-red-700 hover:bg-red-50"
+
+                    {verificado && (
+                      <p
+                        className={
+                          disponible && item.cantidad <= stock
+                            ? "mt-4 text-green-700"
+                            : "mt-4 text-red-700"
+                        }
+                      >
+                        {!disponible
+                          ? "Este producto ya no está disponible en el catálogo. Elimínalo del carrito para continuar."
+                          : stock === 0
+                            ? "Producto sin stock. Elimínalo del carrito o vuelve a consultar más adelante."
+                            : item.cantidad > stock
+                              ? `Solicitaste ${item.cantidad} unidades, pero solo hay ${stock}. Ajusta la cantidad.`
+                              : `Disponibles: ${stock} unidades.`}
+                      </p>
+                    )}
+
+                    {disponible &&
+                      stock > 0 &&
+                      item.cantidad > stock && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            actualizarCantidad(item.codigo, stock)
+                          }
+                          className="mt-3 block font-semibold text-orange-700 underline"
                         >
-                        Eliminar producto
+                          Ajustar a {stock} unidades
+                        </button>
+                      )}
+
+                    <button
+                      type="button"
+                      onClick={() => eliminarProducto(item.codigo)}
+                      aria-label={`Eliminar ${nombre} del carrito`}
+                      className="mt-5 rounded-lg border border-red-700 px-4 py-2 font-semibold text-red-700"
+                    >
+                      Eliminar producto
                     </button>
                   </li>
                 );
@@ -166,18 +287,21 @@ export default function CarritoPage() {
               </h2>
 
               <p className="mt-2 text-3xl font-bold">
-                {formatoPrecio.format(totalCentimos / 100)}
+                {puedeEnviar
+                  ? moneda.format(totalCentimos / 100)
+                  : "Pendiente de revisión"}
               </p>
 
               <p className="mt-3 text-sm text-slate-600">
-                Los precios y la disponibilidad se confirmarán al
-                procesar tu solicitud de cotización.
+                {puedeEnviar
+                  ? "Importe calculado con los precios consultados. El servidor volverá a comprobarlos al procesar la solicitud."
+                  : "Actualiza la disponibilidad y corrige los productos indicados antes de enviar."}
               </p>
             </section>
           </>
         )}
 
-        <EnviarCotizacion />
+        <EnviarCotizacion habilitado={puedeEnviar} />
       </div>
     </main>
   );

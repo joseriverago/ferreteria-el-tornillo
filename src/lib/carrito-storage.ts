@@ -6,15 +6,13 @@ import type { ItemCarrito } from "@/types/carrito";
 
 const CLAVE = "ferreteria-el-tornillo:carrito:v1";
 
-const ItemGuardadoSchema = z
-  .object({
-    codigo: z.string().min(1),
-    nombre: z.string().min(1),
-    precio: z.number().finite().nonnegative(),
-    stock: z.number().int().nonnegative(),
-    cantidad: z.number().int().positive(),
-  })
-  .refine((item) => item.cantidad <= item.stock);
+const ItemGuardadoSchema = z.object({
+  codigo: z.string().min(1),
+  nombre: z.string().min(1),
+  precio: z.number().finite().nonnegative(),
+  stock: z.number().int().nonnegative(),
+  cantidad: z.number().int().positive(),
+});
 
 const CarritoGuardadoSchema = z
   .array(ItemGuardadoSchema)

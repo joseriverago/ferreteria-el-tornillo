@@ -23,7 +23,11 @@ const moneda = new Intl.NumberFormat("es-PE", {
   currency: "PEN",
 });
 
-export default function EnviarCotizacion() {
+export default function EnviarCotizacion({
+  habilitado,
+}: {
+  habilitado: boolean;
+}) {
   const { items } = useCarrito();
   const [observacion, setObservacion] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -35,7 +39,14 @@ export default function EnviarCotizacion() {
   async function enviar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (bloqueo.current || confirmacion || items.length === 0) return;
+    if (
+      bloqueo.current ||
+      confirmacion ||
+      items.length === 0 ||
+      !habilitado
+    ) {
+      return;
+    }
 
     bloqueo.current = true;
     setEnviando(true);
@@ -166,7 +177,7 @@ export default function EnviarCotizacion() {
 
       <button
         type="submit"
-        disabled={enviando}
+        disabled={enviando || !habilitado}
         className="mt-5 rounded-lg bg-orange-700 px-5 py-3 font-semibold text-white hover:bg-orange-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {enviando ? "Enviando cotización..." : "Enviar cotización"}

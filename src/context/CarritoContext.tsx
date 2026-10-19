@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   type ReactNode,
 } from "react";
@@ -14,6 +15,7 @@ import type {
 import { useCarritoPersistente } from "@/lib/carrito-storage";
 
 type CarritoContextType = {
+  sincronizarCatalogo: (productos: ProductoCarrito[]) => void;
   items: ItemCarrito[]; //guarda los productos seleccionados.
   agregarProducto: (producto: ProductoCarrito) => void;
   actualizarCantidad: (codigo: string, cantidad: number) => void;
@@ -29,6 +31,31 @@ export function CarritoProvider({
   children: ReactNode;
 }) {
   const [items, setItems] = useCarritoPersistente();
+  const sincronizarCatalogo = useCallback(
+    (productos: ProductoCarrito[]) => {
+      const porCodigo = new Map(
+        productos.map((producto) => [producto.codigo, producto])
+      );
+
+      setItems((actuales) =>
+        actuales.map((item) => {
+          const producto = porCodigo.get(item.codigo);
+
+          if (!producto) {
+            return { ...item, stock: 0 };
+          }
+
+          return {
+            ...item,
+            nombre: producto.nombre,
+            precio: producto.precio,
+            stock: producto.stock,
+          };
+        })
+      );
+    },
+    [setItems]
+  );
 
   function agregarProducto(producto: ProductoCarrito) { //añade una unidad. Si el producto ya existe, aumenta su cantidad sin duplicar la fila.
     if (producto.stock <= 0) {
@@ -70,7 +97,7 @@ export function CarritoProvider({
           return item;
         }
 
-        if (cantidad > item.stock) {
+        if (cantidad > item.stock && cantidad >= item.cantidad) {
           return item;
         }
 
@@ -98,6 +125,7 @@ export function CarritoProvider({
         actualizarCantidad,
         eliminarProducto,
         totalUnidades,
+        sincronizarCatalogo,
       }}
     >
       {children}
